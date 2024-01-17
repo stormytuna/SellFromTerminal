@@ -14,6 +14,7 @@ namespace SellFromTerminal.Patches
 
 		private static TerminalNode sellAmountNode;
 		private static TerminalNode specialQuotaAlreadyMetNode;
+		private static TerminalNode specialNotEnoughScrapNode;
 
 		[HarmonyPostfix]
 		[HarmonyPatch(nameof(Terminal.Awake))]
@@ -21,6 +22,11 @@ namespace SellFromTerminal.Patches
 			specialQuotaAlreadyMetNode = new TerminalNode {
 				name = "quotaAlreadyMet",
 				displayText = "Quota already met.\n\n\n",
+				clearPreviousText = true
+			};
+			specialNotEnoughScrapNode = new TerminalNode {
+				name = "notEnoughScrap",
+				displayText = "Not enough scrap to meet [sellScrapFor] credits.\nTotal value: [totalScrapValue]\n\n\n",
 				clearPreviousText = true
 			};
 
@@ -69,7 +75,7 @@ namespace SellFromTerminal.Patches
 			};
 			TerminalNode sellAllNode = new TerminalNode {
 				name = "sellAll",
-				displayText = "Beginning transaction.\nRequesting to sell ALL scrap ([numScrap]) for [sellScrapFor] credits.[companyBuyingRateWarning]\n\nPlease CONFIRM or DENY.\n\n\n",
+				displayText = "Beginning transaction.\nRequesting to sell ALL scrap ([numScrap]) for [totalScrapValue] credits.[companyBuyingRateWarning]\n\nPlease CONFIRM or DENY.\n\n\n",
 				isConfirmationNode = true,
 				clearPreviousText = true,
 				overrideOptions = true,
@@ -152,6 +158,7 @@ namespace SellFromTerminal.Patches
 			__result = __result.Replace("[numScrap]", ScrapHelpers.CountAllScrapInShip().ToString());
 			__result = __result.Replace("[sellScrapFor]", sellScrapFor.ToString());
 			__result = __result.Replace("[numScrapSold]", numScrapSold.ToString());
+			__result = __result.Replace("[totalScrapValue]", ScrapHelpers.GetTotalScrapValueInShip().ToString());
 			string companyBuyingRateWarning = StartOfRound.Instance.companyBuyingRate == 1f ? "" : $"\n\nWARNING: Company buying rate is currently at {StartOfRound.Instance.companyBuyingRate:P0}\n\n";
 			__result = __result.Replace("[companyBuyingRateWarning]", companyBuyingRateWarning);
 
@@ -191,9 +198,13 @@ namespace SellFromTerminal.Patches
 
 		[HarmonyPostfix]
 		[HarmonyPatch(nameof(Terminal.ParsePlayerSentence))]
-		public static TerminalNode TryReturnSpecialNodeForWhenAlreadyMetQuota(TerminalNode __result, Terminal __instance) {
+		public static TerminalNode TryReturnSpecialNodes(TerminalNode __result, Terminal __instance) {
 			if (__result.name == "sellQuota" && TimeOfDay.Instance.profitQuota - TimeOfDay.Instance.quotaFulfilled <= 0) {
 				return specialQuotaAlreadyMetNode;
+			}
+
+			if ((__result.name == "sellQuota" || __result.name == "sellAmount") && sellScrapFor > ScrapHelpers.GetTotalScrapValueInShip()) {
+				return specialNotEnoughScrapNode;
 			}
 
 			return __result;

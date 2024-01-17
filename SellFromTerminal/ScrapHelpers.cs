@@ -15,9 +15,10 @@ namespace SellFromTerminal
 
 		public static IEnumerable<GrabbableObject> GetScrapForAmount(int amount) {
 			// Sanity check that we actually have enough
+			// Technically should never happen since terminal doesn't allow player to sell scrap if it won't meet the amount
 			int totalScrapValue = GetTotalScrapValueInShip();
 			if (totalScrapValue < amount) {
-				SellFromTerminalBase.Log.LogInfo($"Cannot reach quota!! Total value: {totalScrapValue}, total num scrap: {CountAllScrapInShip()}");
+				SellFromTerminalBase.Log.LogInfo($"Cannot reach required amount of {amount}! Total value: {totalScrapValue}, total num scrap: {CountAllScrapInShip()}");
 				return Enumerable.Empty<GrabbableObject>();
 			}
 
