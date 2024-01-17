@@ -17,16 +17,23 @@ namespace SellFromTerminal.Patches
 		public static int numScrapSold;
 
 		private static TerminalNode sellAmountNode;
+		private static TerminalNode specialQuotaAlreadyMetNode;
 
 		[HarmonyPostfix]
 		[HarmonyPatch(nameof(Terminal.Awake))]
 		public static void AddTerminalNodes(Terminal __instance) {
+			specialQuotaAlreadyMetNode = new TerminalNode {
+				name = "quotaAlreadyMet",
+				displayText = "Quota already met.\n\n\n",
+				clearPreviousText = true
+			};
+
 			TerminalKeyword confirmKeyword = __instance.terminalNodes.allKeywords.First(kw => kw.name == "Confirm");
 			TerminalKeyword denyKeyword = __instance.terminalNodes.allKeywords.First(kw => kw.name == "Deny");
 
 			TerminalNode sellQuotaConfirmNode = new TerminalNode {
 				name = "sellQuotaConfirm",
-				displayText = "Transaction complete.\nSold [numScrapSold] scrap for [sellScrapFor].\n\nThe company is not responsible for any calculation errors.\n\n\n",
+				displayText = "Transaction complete.\nSold [numScrapSold] scrap for [sellScrapFor] credits.\n\nThe company is not responsible for any calculation errors.\n\n\n",
 				clearPreviousText = true,
 				terminalEvent = "sellQuota"
 			};
@@ -55,7 +62,7 @@ namespace SellFromTerminal.Patches
 
 			TerminalNode sellAllConfirmNode = new TerminalNode {
 				name = "sellAllConfirm",
-				displayText = "Transaction complete. Sold all scrap for [sellScrapFor] credits.\n\n\n",
+				displayText = "Transaction complete. Sold all scrap for [sellScrapFor] credits.\n\nThe company is not responsible for any calculation errors.\n\n\n",
 				clearPreviousText = true,
 				terminalEvent = "sellAll"
 			};
@@ -179,7 +186,19 @@ namespace SellFromTerminal.Patches
 			Match match = regex.Match(terminalInput.ToLower());
 			if (match.Success) {
 				sellScrapFor = Convert.ToInt32(match.Groups[1].Value);
-				return sellAmountNode;
+				if (sellScrapFor > 0) {
+					return sellAmountNode;
+				}
+			}
+
+			return __result;
+		}
+
+		[HarmonyPostfix]
+		[HarmonyPatch(nameof(Terminal.ParsePlayerSentence))]
+		public static TerminalNode TryReturnSpecialNodeForWhenAlreadyMetQuota(TerminalNode __result, Terminal __instance) {
+			if (__result.name == "sellQuota" && TimeOfDay.Instance.profitQuota - TimeOfDay.Instance.quotaFulfilled <= 0) {
+				return specialQuotaAlreadyMetNode;
 			}
 
 			return __result;

@@ -68,6 +68,9 @@ namespace SellFromTerminal
 			}
 
 			HUDManager.Instance.DisplayGlobalNotification($"Sold {totalItemsSold} pieces of scrap for {totalCreditsGained}!");
+			// Hacky fix for showing the actual amount of items sold and credits gained
+			TerminalPatch.numScrapSold = totalItemsSold;
+			TerminalPatch.sellScrapFor = totalCreditsGained;
 			// TODO: Advance quota if we meet it
 		}
 
