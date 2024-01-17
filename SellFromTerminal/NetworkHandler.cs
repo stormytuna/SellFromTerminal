@@ -43,7 +43,12 @@ namespace SellFromTerminal
 			// Hacky fix for showing the actual amount of items sold and credits gained
 			TerminalPatch.numScrapSold = totalItemsSold;
 			TerminalPatch.sellScrapFor = totalCreditsGained;
-			// TODO: Advance quota if we meet/exceed it
+
+			// TODO: Config option for if this happens or not
+			if (TimeOfDay.Instance.quotaFulfilled >= TimeOfDay.Instance.profitQuota) {
+				StartOfRound.Instance.PassTimeToNextDay(StartOfRound.Instance.connectedPlayersAmount);
+				TimeOfDay.Instance.SetNewProfitQuota();
+			}
 		}
 
 		[ClientRpc]
@@ -61,7 +66,12 @@ namespace SellFromTerminal
 			// Hacky fix for showing the actual amount of items sold and credits gained
 			TerminalPatch.numScrapSold = totalItemsSold;
 			TerminalPatch.sellScrapFor = totalCreditsGained;
-			// TODO: Advance quota if we meet it
+
+			// TODO: Config option for if this happens or not
+			if (TimeOfDay.Instance.quotaFulfilled >= TimeOfDay.Instance.profitQuota) {
+				StartOfRound.Instance.PassTimeToNextDay(StartOfRound.Instance.connectedPlayersAmount);
+				TimeOfDay.Instance.SetNewProfitQuota();
+			}
 		}
 
 		[ServerRpc(RequireOwnership = false)]
