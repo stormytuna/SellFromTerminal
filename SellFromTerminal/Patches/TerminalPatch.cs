@@ -14,6 +14,8 @@ namespace SellFromTerminal.Patches
 	{
 		// Hack so we can display how much the scrap sold for without recalculating it
 		public static int sellScrapFor;
+		public static int numScrapSold;
+
 		private static TerminalNode sellAmountNode;
 
 		[HarmonyPostfix]
@@ -24,7 +26,7 @@ namespace SellFromTerminal.Patches
 
 			TerminalNode sellQuotaConfirmNode = new TerminalNode {
 				name = "sellQuotaConfirm",
-				displayText = "Transaction complete.\n\n\n",
+				displayText = "Transaction complete.\nSold [numScrapSold] scrap for [sellScrapFor].\n\nThe company is not responsible for any calculation errors.\n\n\n",
 				clearPreviousText = true,
 				terminalEvent = "sellQuota"
 			};
@@ -35,7 +37,7 @@ namespace SellFromTerminal.Patches
 			};
 			TerminalNode sellQuotaNode = new TerminalNode {
 				name = "sellQuota",
-				displayText = "Beginning transaction.\nRequesting to sell scrap as close to [sellScrapFor].[companyBuyingRateWarning]\n\nPlease CONFIRM or DENY.\n\n\n",
+				displayText = "Beginning transaction.\nRequesting to sell scrap as close to [sellScrapFor] credits as possible.[companyBuyingRateWarning]\n\nPlease CONFIRM or DENY.\n\n\n",
 				isConfirmationNode = true,
 				clearPreviousText = true,
 				overrideOptions = true,
@@ -83,7 +85,7 @@ namespace SellFromTerminal.Patches
 
 			TerminalNode sellAmountConfirmNode = new TerminalNode {
 				name = "sellAmountConfirm",
-				displayText = "Transaction complete.\n\n\n",
+				displayText = "Transaction complete.\nSold [numScrapSold] scrap for [sellScrapFor].\n\nThe company is not responsible for any calculation errors.\n\n\n",
 				clearPreviousText = true,
 				terminalEvent = "sellAmount"
 			};
@@ -94,7 +96,7 @@ namespace SellFromTerminal.Patches
 			};
 			sellAmountNode = new TerminalNode {
 				name = "sellAmount",
-				displayText = "Beginning transaction.\nRequesting to sell scrap as close to [sellScrapFor].[companyBuyingRateWarning]\n\nPlease CONFIRM or DENY.\n\n\n",
+				displayText = "Beginning transaction.\nRequesting to sell scrap as close to [sellScrapFor] credits as possible.[companyBuyingRateWarning]\n\nPlease CONFIRM or DENY.\n\n\n",
 				isConfirmationNode = true,
 				clearPreviousText = true,
 				overrideOptions = true,
@@ -147,6 +149,7 @@ namespace SellFromTerminal.Patches
 		public static string ProcessCustomText(string __result) {
 			__result = __result.Replace("[numScrap]", ScrapHelpers.CountAllScrapInShip().ToString()); // TODO: Doesnt take company buying rate into account
 			__result = __result.Replace("[sellScrapFor]", sellScrapFor.ToString());
+			__result = __result.Replace("[numScrapSold]", numScrapSold.ToString());
 			string companyBuyingRateWarning = StartOfRound.Instance.companyBuyingRate == 1f ? "" : $"\n\nWARNING: Company buying rate is currently at {StartOfRound.Instance.companyBuyingRate:P0}\n\n";
 			__result = __result.Replace("[companyBuyingRateWarning]", companyBuyingRateWarning);
 
@@ -175,7 +178,6 @@ namespace SellFromTerminal.Patches
 			Regex regex = new Regex(@"^sell (\d+$)$");
 			Match match = regex.Match(terminalInput.ToLower());
 			if (match.Success) {
-				SellFromTerminalBase.Log.LogInfo(match.Groups[1].Value);
 				sellScrapFor = Convert.ToInt32(match.Groups[1].Value);
 				return sellAmountNode;
 			}
@@ -194,6 +196,7 @@ namespace SellFromTerminal.Patches
 				NetworkHandler.Instance.SellAmountServerRpc(sellScrapFor);
 			}
 
+			// TODO: Remove this!!
 			if (node.terminalEvent == "giveLootHack") {
 				for (int i = 0; i < 50; i++) {
 					Random rand = new Random();

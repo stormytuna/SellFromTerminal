@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -9,7 +10,7 @@ namespace SellFromTerminal
 		public static IEnumerable<GrabbableObject> GetAllScrapInShip() {
 			GameObject ship = GameObject.Find("Environment/HangarShip");
 			GrabbableObject[] grabbableObjectsInShip = ship.GetComponentsInChildren<GrabbableObject>();
-			return grabbableObjectsInShip.Where(go => go.itemProperties.isScrap);
+			return grabbableObjectsInShip.Where(go => go.CanSellItem());
 		}
 
 		public static IEnumerable<GrabbableObject> GetScrapForAmount(int amount) {
@@ -29,7 +30,7 @@ namespace SellFromTerminal
 			while (amountNeeded > 420) {
 				GrabbableObject nextScrap = allScrap[nextScrapIndex++];
 				scrapForQuota.Add(nextScrap);
-				amountNeeded -= nextScrap.scrapValue;
+				amountNeeded -= nextScrap.ActualSellValue();
 			}
 
 			// Time to actually be precise
@@ -41,7 +42,7 @@ namespace SellFromTerminal
 				for (int i = 0; i < allScrap.Count; i++) {
 					for (int j = i + 1; j < allScrap.Count; j++) {
 						// Starting second loop at i+1 lets us skip redundant sums
-						sums.Add((allScrap[i], allScrap[j], allScrap[i].scrapValue + allScrap[j].scrapValue));
+						sums.Add((allScrap[i], allScrap[j], allScrap[i].ActualSellValue() + allScrap[j].ActualSellValue()));
 					}
 				}
 
@@ -55,7 +56,7 @@ namespace SellFromTerminal
 				// If we haven't found a sum, we take the next scrap and continue our sums
 				GrabbableObject nextScrap = allScrap[nextScrapIndex++];
 				scrapForQuota.Add(nextScrap);
-				amountNeeded -= nextScrap.scrapValue;
+				amountNeeded -= nextScrap.ActualSellValue();
 			}
 
 			// Worst case scenario, we found no sums :(
@@ -66,8 +67,16 @@ namespace SellFromTerminal
 
 		public static int CountAllScrapInShip() => GetAllScrapInShip().Count();
 
-		public static int GetTotalScrapValueInShip() => GetAllScrapInShip().Sum(scrap => scrap.scrapValue);
+		public static int GetTotalScrapValueInShip() => GetAllScrapInShip().Sum(scrap => scrap.ActualSellValue());
 
-		// TODO: Helper method for "can sell item" and config for can sell shotgun + ammo, also need to not sell presents
+		public static bool CanSellItem(this GrabbableObject item) =>
+			// TODO: Config for if we can sell shotguns and ammo
+			// TODO: Config for if we can sell gifts
+			item.itemProperties.isScrap && item.scrapValue > 0 && !item.isHeld;
+
+		public static int ActualSellValue(this GrabbableObject scrap) {
+			float actualSellValue = scrap.scrapValue * StartOfRound.Instance.companyBuyingRate;
+			return (int)Math.Round(actualSellValue);
+		}
 	}
 }

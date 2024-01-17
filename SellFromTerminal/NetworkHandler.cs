@@ -1,4 +1,4 @@
-﻿using System;
+﻿using SellFromTerminal.Patches;
 using Unity.Netcode;
 
 namespace SellFromTerminal
@@ -13,15 +13,8 @@ namespace SellFromTerminal
 			int totalCreditsGained = 0;
 
 			foreach (GrabbableObject scrap in ScrapHelpers.GetAllScrapInShip()) {
-				// TODO: Move into a ScrapHelpers.GetAllSellableScrapInShip method, also add some config options for gifts, shotguns and shotgun shells
-				if (scrap.itemProperties.itemName == "Gift" || scrap.isHeld || scrap.scrapValue <= 0) {
-					continue;
-				}
-
 				// TODO: Abstract into a "Sell Item" method we can reuse
-				float actualSellValue = scrap.scrapValue * StartOfRound.Instance.companyBuyingRate;
-				int creditsToGain = (int)Math.Round(actualSellValue);
-
+				int creditsToGain = scrap.ActualSellValue();
 				totalItemsSold++;
 				totalCreditsGained += creditsToGain;
 
@@ -42,6 +35,9 @@ namespace SellFromTerminal
 			}
 
 			HUDManager.Instance.DisplayGlobalNotification($"Sold {totalItemsSold} pieces of scrap for {totalCreditsGained}!");
+			// Hacky fix for showing the actual amount of items sold and credits gained
+			TerminalPatch.numScrapSold = totalItemsSold;
+			TerminalPatch.sellScrapFor = totalCreditsGained;
 			// TODO: Advance quota if we meet/exceed it
 		}
 
@@ -51,9 +47,7 @@ namespace SellFromTerminal
 			int totalCreditsGained = 0;
 
 			foreach (GrabbableObject scrap in ScrapHelpers.GetScrapForAmount(amount)) {
-				float actualSellValue = scrap.scrapValue * StartOfRound.Instance.companyBuyingRate;
-				int creditsToGain = (int)Math.Round(actualSellValue);
-
+				int creditsToGain = scrap.ActualSellValue();
 				totalItemsSold++;
 				totalCreditsGained += creditsToGain;
 
