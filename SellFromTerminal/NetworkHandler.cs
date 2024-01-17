@@ -13,10 +13,12 @@ namespace SellFromTerminal
 			int totalCreditsGained = 0;
 
 			foreach (GrabbableObject scrap in ScrapHelpers.GetAllScrapInShip()) {
+				// TODO: Move into a ScrapHelpers.GetAllSellableScrapInShip method, also add some config options for gifts, shotguns and shotgun shells
 				if (scrap.itemProperties.itemName == "Gift" || scrap.isHeld || scrap.scrapValue <= 0) {
 					continue;
 				}
 
+				// TODO: Abstract into a "Sell Item" method we can reuse
 				float actualSellValue = scrap.scrapValue * StartOfRound.Instance.companyBuyingRate;
 				int creditsToGain = (int)Math.Round(actualSellValue);
 

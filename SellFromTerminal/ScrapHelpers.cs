@@ -12,32 +12,21 @@ namespace SellFromTerminal
 			return grabbableObjectsInShip.Where(go => go.itemProperties.isScrap);
 		}
 
-		// TODO: Refactor into GetScrapForAmount(int amount) method with this method just calling that with amount needed for quota
-		public static IEnumerable<GrabbableObject> GetScrapForQuota() {
-			// Sanity check that we can actually reach quota
+		public static IEnumerable<GrabbableObject> GetScrapForAmount(int amount) {
+			// Sanity check that we actually have enough
 			int totalScrapValue = GetTotalScrapValueInShip();
-			if (totalScrapValue < TimeOfDay.Instance.profitQuota) {
+			if (totalScrapValue < amount) {
 				SellFromTerminalBase.Log.LogInfo($"Cannot reach quota!! Total value: {totalScrapValue}, total num scrap: {CountAllScrapInShip()}");
 				return Enumerable.Empty<GrabbableObject>();
 			}
 
 			int nextScrapIndex = 0;
 			List<GrabbableObject> allScrap = GetAllScrapInShip().OrderByDescending(scrap => scrap.scrapValue).ThenBy(scrap => scrap.NetworkObjectId).ToList();
-
-			SellFromTerminalBase.Log.LogInfo("FIRST SET");
-			foreach (GrabbableObject scrap in allScrap) {
-				SellFromTerminalBase.Log.LogInfo($"Scrap {scrap.NetworkObjectId}, worth {scrap.scrapValue}");
-			}
-
-			SellFromTerminalBase.Log.LogInfo("-------------------");
-
 			List<GrabbableObject> scrapForQuota = new List<GrabbableObject>();
 
-			int amountNeeded = TimeOfDay.Instance.profitQuota - TimeOfDay.Instance.quotaFulfilled;
+			int amountNeeded = amount;
 			// Highest value scrap is 210, we only want to go 2 sums deep to keep computational complexity to a minimum so we keep taking until we have 420 credits left
 			while (amountNeeded > 420) {
-				SellFromTerminalBase.Log.LogInfo($"Being cringe!! Next scrap index: {nextScrapIndex}. Total scrap: {allScrap.Count}");
-
 				GrabbableObject nextScrap = allScrap[nextScrapIndex++];
 				scrapForQuota.Add(nextScrap);
 				amountNeeded -= nextScrap.scrapValue;
@@ -46,13 +35,6 @@ namespace SellFromTerminal
 			// Time to actually be precise
 			allScrap = allScrap.Skip(nextScrapIndex).OrderBy(scrap => scrap.scrapValue).ThenBy(scrap => scrap.NetworkObjectId).ToList();
 			nextScrapIndex = 0;
-
-			SellFromTerminalBase.Log.LogInfo("SECOND SET");
-			foreach (GrabbableObject scrap in allScrap) {
-				SellFromTerminalBase.Log.LogInfo($"Scrap {scrap.NetworkObjectId}, worth {scrap.scrapValue}");
-			}
-
-			SellFromTerminalBase.Log.LogInfo("-------------------");
 
 			while (amountNeeded > 0) {
 				List<(GrabbableObject first, GrabbableObject second, int sum)> sums = new List<(GrabbableObject first, GrabbableObject second, int sum)>();
@@ -81,6 +63,8 @@ namespace SellFromTerminal
 			SellFromTerminalBase.Log.LogInfo("Couldn't find a way to perfectly meet quota :(");
 			return scrapForQuota;
 		}
+
+		public static IEnumerable<GrabbableObject> GetScrapForQuota() => GetScrapForAmount(TimeOfDay.Instance.profitQuota - TimeOfDay.Instance.quotaFulfilled);
 
 		public static int CountAllScrapInShip() => GetAllScrapInShip().Count();
 
