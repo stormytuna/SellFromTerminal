@@ -2,10 +2,6 @@
 using System.Linq;
 using System.Text.RegularExpressions;
 using HarmonyLib;
-using Unity.Netcode;
-using UnityEngine;
-using Object = UnityEngine.Object;
-using Random = System.Random;
 
 namespace SellFromTerminal.Patches
 {
@@ -69,8 +65,7 @@ namespace SellFromTerminal.Patches
 			TerminalNode sellAllDenyNode = new TerminalNode {
 				name = "sellAllConfirm",
 				displayText = "Transaction cancelled.\n\n\n",
-				clearPreviousText = true,
-				terminalEvent = "giveLootHack" // TODO: Remove for obvious reasons lol
+				clearPreviousText = true
 			};
 			TerminalNode sellAllNode = new TerminalNode {
 				name = "sellAll",
@@ -154,7 +149,7 @@ namespace SellFromTerminal.Patches
 		[HarmonyPostfix]
 		[HarmonyPatch(nameof(Terminal.TextPostProcess))]
 		public static string ProcessCustomText(string __result) {
-			__result = __result.Replace("[numScrap]", ScrapHelpers.CountAllScrapInShip().ToString()); // TODO: Doesnt take company buying rate into account
+			__result = __result.Replace("[numScrap]", ScrapHelpers.CountAllScrapInShip().ToString());
 			__result = __result.Replace("[sellScrapFor]", sellScrapFor.ToString());
 			__result = __result.Replace("[numScrapSold]", numScrapSold.ToString());
 			string companyBuyingRateWarning = StartOfRound.Instance.companyBuyingRate == 1f ? "" : $"\n\nWARNING: Company buying rate is currently at {StartOfRound.Instance.companyBuyingRate:P0}\n\n";
@@ -213,21 +208,6 @@ namespace SellFromTerminal.Patches
 
 			if (node.terminalEvent == "sellQuota" || node.terminalEvent == "sellAmount") {
 				NetworkHandler.Instance.SellAmountServerRpc(sellScrapFor);
-			}
-
-			// TODO: Remove this!!
-			if (node.terminalEvent == "giveLootHack") {
-				for (int i = 0; i < 50; i++) {
-					Random rand = new Random();
-					int nextScrap = rand.Next(16, 68);
-					GameObject scrap = Object.Instantiate(StartOfRound.Instance.allItemsList.itemsList[nextScrap].spawnPrefab, GameNetworkManager.Instance.localPlayerController.transform.position, Quaternion.identity);
-					scrap.GetComponent<GrabbableObject>().fallTime = 0f;
-					int scrapValue = rand.Next(20, 120);
-					scrap.AddComponent<ScanNodeProperties>().scrapValue = scrapValue;
-					scrap.GetComponent<GrabbableObject>().scrapValue = scrapValue;
-					scrap.GetComponent<NetworkObject>().Spawn();
-					RoundManager.Instance.scrapCollectedThisRound.Add(scrap.GetComponent<GrabbableObject>());
-				}
 			}
 		}
 	}
