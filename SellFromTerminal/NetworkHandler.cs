@@ -7,31 +7,36 @@ namespace SellFromTerminal
 	{
 		public static NetworkHandler Instance { get; private set; }
 
+		private int SellScrap(GrabbableObject scrap) {
+			int creditsToGain = scrap.ActualSellValue();
+
+			HUDManager.Instance.terminalScript.groupCredits += creditsToGain;
+			StartOfRound.Instance.gameStats.scrapValueCollected += creditsToGain;
+			TimeOfDay.Instance.quotaFulfilled += creditsToGain;
+			TimeOfDay.Instance.UpdateProfitQuotaCurrentTime();
+
+			/* TODO: Testing, remove this!
+			if (NetworkManager.Singleton.IsServer) {
+				scrap.GetComponent<NetworkObject>().Despawn();
+			}
+
+			if (scrap.radarIcon != null) {
+				Destroy(scrap.radarIcon.gameObject);
+			}
+			*/
+
+			return creditsToGain;
+		}
+
 		[ClientRpc]
 		public void SellAllScrapClientRpc() {
 			int totalItemsSold = 0;
 			int totalCreditsGained = 0;
 
 			foreach (GrabbableObject scrap in ScrapHelpers.GetAllScrapInShip()) {
-				// TODO: Abstract into a "Sell Item" method we can reuse
-				int creditsToGain = scrap.ActualSellValue();
+				int creditsGained = SellScrap(scrap);
+				totalCreditsGained += creditsGained;
 				totalItemsSold++;
-				totalCreditsGained += creditsToGain;
-
-				HUDManager.Instance.terminalScript.groupCredits += creditsToGain;
-				StartOfRound.Instance.gameStats.scrapValueCollected += creditsToGain;
-				TimeOfDay.Instance.quotaFulfilled += creditsToGain;
-				TimeOfDay.Instance.UpdateProfitQuotaCurrentTime();
-
-				/* TODO: Testing, remove this!
-				if (NetworkManager.Singleton.IsServer) {
-					scrap.GetComponent<NetworkObject>().Despawn();
-				}
-
-				if (scrap.radarIcon != null) {
-					Destroy(scrap.radarIcon.gameObject);
-				}
-				*/
 			}
 
 			HUDManager.Instance.DisplayGlobalNotification($"Sold {totalItemsSold} pieces of scrap for {totalCreditsGained}!");
@@ -47,24 +52,9 @@ namespace SellFromTerminal
 			int totalCreditsGained = 0;
 
 			foreach (GrabbableObject scrap in ScrapHelpers.GetScrapForAmount(amount)) {
-				int creditsToGain = scrap.ActualSellValue();
+				int creditsGained = SellScrap(scrap);
+				totalCreditsGained += creditsGained;
 				totalItemsSold++;
-				totalCreditsGained += creditsToGain;
-
-				HUDManager.Instance.terminalScript.groupCredits += creditsToGain;
-				StartOfRound.Instance.gameStats.scrapValueCollected += creditsToGain;
-				TimeOfDay.Instance.quotaFulfilled += creditsToGain;
-				TimeOfDay.Instance.UpdateProfitQuotaCurrentTime();
-
-				/* TODO: Testing, remove this!
-				if (NetworkManager.Singleton.IsServer) {
-					scrap.GetComponent<NetworkObject>().Despawn();
-				}
-
-				if (scrap.radarIcon != null) {
-					Destroy(scrap.radarIcon.gameObject);
-				}
-				*/
 			}
 
 			HUDManager.Instance.DisplayGlobalNotification($"Sold {totalItemsSold} pieces of scrap for {totalCreditsGained}!");
