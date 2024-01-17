@@ -1,7 +1,10 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
+using System.Text.RegularExpressions;
 using HarmonyLib;
 using Unity.Netcode;
 using UnityEngine;
+using Object = UnityEngine.Object;
 using Random = System.Random;
 
 namespace SellFromTerminal.Patches
@@ -10,18 +13,18 @@ namespace SellFromTerminal.Patches
 	public class TerminalPatch
 	{
 		// Hack so we can display how much the scrap sold for without recalculating it
-		private static int sellScrapFor;
+		public static int sellScrapFor;
+		private static TerminalNode sellAmountNode;
 
 		[HarmonyPostfix]
 		[HarmonyPatch(nameof(Terminal.Awake))]
 		public static void AddTerminalNodes(Terminal __instance) {
-			// TODO: Probably update to use terminal API? idk...
 			TerminalKeyword confirmKeyword = __instance.terminalNodes.allKeywords.First(kw => kw.name == "Confirm");
 			TerminalKeyword denyKeyword = __instance.terminalNodes.allKeywords.First(kw => kw.name == "Deny");
 
 			TerminalNode sellQuotaConfirmNode = new TerminalNode {
 				name = "sellQuotaConfirm",
-				displayText = "Transaction complete. Sold scrap for [sellScrapFor] credits.\n\n\n",
+				displayText = "Transaction complete.\n\n\n",
 				clearPreviousText = true,
 				terminalEvent = "sellQuota"
 			};
@@ -30,10 +33,9 @@ namespace SellFromTerminal.Patches
 				displayText = "Transaction cancelled.\n\n\n",
 				clearPreviousText = true
 			};
-
 			TerminalNode sellQuotaNode = new TerminalNode {
 				name = "sellQuota",
-				displayText = "Beginning transaction.\nRequesting to sell scrap as close to quota as possible.[companyBuyingRateWarning]\n\nPlease CONFIRM or DENY.\n\n\n",
+				displayText = "Beginning transaction.\nRequesting to sell scrap as close to [sellScrapFor].[companyBuyingRateWarning]\n\nPlease CONFIRM or DENY.\n\n\n",
 				isConfirmationNode = true,
 				clearPreviousText = true,
 				overrideOptions = true,
@@ -61,7 +63,6 @@ namespace SellFromTerminal.Patches
 				clearPreviousText = true,
 				terminalEvent = "giveLootHack" // TODO: Remove for obvious reasons lol
 			};
-
 			TerminalNode sellAllNode = new TerminalNode {
 				name = "sellAll",
 				displayText = "Beginning transaction.\nRequesting to sell ALL scrap ([numScrap]) for [sellScrapFor] credits.[companyBuyingRateWarning]\n\nPlease CONFIRM or DENY.\n\n\n",
@@ -76,6 +77,35 @@ namespace SellFromTerminal.Patches
 					new CompatibleNoun {
 						noun = denyKeyword,
 						result = sellAllDenyNode
+					}
+				}
+			};
+
+			TerminalNode sellAmountConfirmNode = new TerminalNode {
+				name = "sellAmountConfirm",
+				displayText = "Transaction complete.\n\n\n",
+				clearPreviousText = true,
+				terminalEvent = "sellAmount"
+			};
+			TerminalNode sellAmountDenyNode = new TerminalNode {
+				name = "sellAllConfirm",
+				displayText = "Transaction cancelled.\n\n\n",
+				clearPreviousText = true
+			};
+			sellAmountNode = new TerminalNode {
+				name = "sellAmount",
+				displayText = "Beginning transaction.\nRequesting to sell scrap as close to [sellScrapFor].[companyBuyingRateWarning]\n\nPlease CONFIRM or DENY.\n\n\n",
+				isConfirmationNode = true,
+				clearPreviousText = true,
+				overrideOptions = true,
+				terminalOptions = new[] {
+					new CompatibleNoun {
+						noun = confirmKeyword,
+						result = sellAmountConfirmNode
+					},
+					new CompatibleNoun {
+						noun = denyKeyword,
+						result = sellAmountDenyNode
 					}
 				}
 			};
@@ -125,13 +155,32 @@ namespace SellFromTerminal.Patches
 
 		[HarmonyPostfix]
 		[HarmonyPatch(nameof(Terminal.ParsePlayerSentence))]
-		public static void SetSellScrapForHack(Terminal __instance) {
+		public static void SetSellScrapForHack(TerminalNode __result, Terminal __instance) {
 			// We set sellScrapFor here if we're trying to sell anything so that the value is only calculated once and will be the same for both nodes ('sell' and then 'confirm')
-			string terminalInput = __instance.screenText.text.Substring(__instance.screenText.text.Length - __instance.textAdded);
-
-			if (terminalInput.ToLower() == "sell all") {
+			// For 'sell <amount>' we set it further down in TryParseSellAmount
+			if (__result.name == "sellAll") {
 				sellScrapFor = ScrapHelpers.GetTotalScrapValueInShip();
 			}
+
+			if (__result.name == "sellQuota") {
+				sellScrapFor = TimeOfDay.Instance.profitQuota - TimeOfDay.Instance.quotaFulfilled;
+			}
+		}
+
+		[HarmonyPostfix]
+		[HarmonyPatch(nameof(Terminal.ParsePlayerSentence))]
+		public static TerminalNode TryParseSellAmount(TerminalNode __result, Terminal __instance) {
+			string terminalInput = __instance.screenText.text.Substring(__instance.screenText.text.Length - __instance.textAdded);
+
+			Regex regex = new Regex(@"^sell (\d+$)$");
+			Match match = regex.Match(terminalInput.ToLower());
+			if (match.Success) {
+				SellFromTerminalBase.Log.LogInfo(match.Groups[1].Value);
+				sellScrapFor = Convert.ToInt32(match.Groups[1].Value);
+				return sellAmountNode;
+			}
+
+			return __result;
 		}
 
 		[HarmonyPostfix]
@@ -141,8 +190,8 @@ namespace SellFromTerminal.Patches
 				NetworkHandler.Instance.SellAllScrapServerRpc();
 			}
 
-			if (node.terminalEvent == "sellQuota") {
-				NetworkHandler.Instance.SellQuotaScrapServerRpc();
+			if (node.terminalEvent == "sellQuota" || node.terminalEvent == "sellAmount") {
+				NetworkHandler.Instance.SellAmountServerRpc(sellScrapFor);
 			}
 
 			if (node.terminalEvent == "giveLootHack") {

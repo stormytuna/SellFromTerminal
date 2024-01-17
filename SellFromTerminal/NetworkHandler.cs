@@ -30,6 +30,7 @@ namespace SellFromTerminal
 				TimeOfDay.Instance.quotaFulfilled += creditsToGain;
 				TimeOfDay.Instance.UpdateProfitQuotaCurrentTime();
 
+				/* TODO: Testing, remove this!
 				if (NetworkManager.Singleton.IsServer) {
 					scrap.GetComponent<NetworkObject>().Despawn();
 				}
@@ -37,6 +38,7 @@ namespace SellFromTerminal
 				if (scrap.radarIcon != null) {
 					Destroy(scrap.radarIcon.gameObject);
 				}
+				*/
 			}
 
 			HUDManager.Instance.DisplayGlobalNotification($"Sold {totalItemsSold} pieces of scrap for {totalCreditsGained}!");
@@ -44,11 +46,11 @@ namespace SellFromTerminal
 		}
 
 		[ClientRpc]
-		public void SellQuotaScrapClientRpc() {
+		public void SellAmountClientRpc(int amount) {
 			int totalItemsSold = 0;
 			int totalCreditsGained = 0;
 
-			foreach (GrabbableObject scrap in ScrapHelpers.GetScrapForQuota()) {
+			foreach (GrabbableObject scrap in ScrapHelpers.GetScrapForAmount(amount)) {
 				float actualSellValue = scrap.scrapValue * StartOfRound.Instance.companyBuyingRate;
 				int creditsToGain = (int)Math.Round(actualSellValue);
 
@@ -60,6 +62,7 @@ namespace SellFromTerminal
 				TimeOfDay.Instance.quotaFulfilled += creditsToGain;
 				TimeOfDay.Instance.UpdateProfitQuotaCurrentTime();
 
+				/* TODO: Testing, remove this!
 				if (NetworkManager.Singleton.IsServer) {
 					scrap.GetComponent<NetworkObject>().Despawn();
 				}
@@ -67,6 +70,7 @@ namespace SellFromTerminal
 				if (scrap.radarIcon != null) {
 					Destroy(scrap.radarIcon.gameObject);
 				}
+				*/
 			}
 
 			HUDManager.Instance.DisplayGlobalNotification($"Sold {totalItemsSold} pieces of scrap for {totalCreditsGained}!");
@@ -79,8 +83,8 @@ namespace SellFromTerminal
 		}
 
 		[ServerRpc(RequireOwnership = false)]
-		public void SellQuotaScrapServerRpc() {
-			SellQuotaScrapClientRpc();
+		public void SellAmountServerRpc(int amount) {
+			SellAmountClientRpc(amount);
 		}
 
 		public override void OnNetworkSpawn() {

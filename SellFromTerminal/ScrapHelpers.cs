@@ -64,8 +64,6 @@ namespace SellFromTerminal
 			return scrapForQuota;
 		}
 
-		public static IEnumerable<GrabbableObject> GetScrapForQuota() => GetScrapForAmount(TimeOfDay.Instance.profitQuota - TimeOfDay.Instance.quotaFulfilled);
-
 		public static int CountAllScrapInShip() => GetAllScrapInShip().Count();
 
 		public static int GetTotalScrapValueInShip() => GetAllScrapInShip().Sum(scrap => scrap.scrapValue);
