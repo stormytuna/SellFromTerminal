@@ -40,7 +40,7 @@ namespace SellFromTerminal
 
 			while (amountNeeded > 0) {
 				List<(GrabbableObject first, GrabbableObject second, int sum)> sums = new List<(GrabbableObject first, GrabbableObject second, int sum)>();
-				for (int i = 0; i < allScrap.Count; i++) {
+				for (int i = nextScrapIndex; i < allScrap.Count; i++) {
 					for (int j = i + 1; j < allScrap.Count; j++) {
 						// Starting second loop at i+1 lets us skip redundant sums
 						sums.Add((allScrap[i], allScrap[j], allScrap[i].ActualSellValue() + allScrap[j].ActualSellValue()));
