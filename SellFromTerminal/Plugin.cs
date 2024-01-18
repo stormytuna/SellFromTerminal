@@ -46,6 +46,8 @@ namespace SellFromTerminal
 				Log.LogError("Failed to load custom assets!");
 			}
 
+			LoadConfigs();
+
 			harmony.PatchAll();
 		}
 
