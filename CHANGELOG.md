@@ -1,1 +1,2 @@
+- v1.0.1: Fix an issue that allowed a scrap to be sold twice
 - v1.0.0: Initial release

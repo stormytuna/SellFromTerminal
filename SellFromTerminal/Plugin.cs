@@ -14,7 +14,7 @@ namespace SellFromTerminal
 	{
 		public const string ModGUID = "stormytuna.SellFromTerminal";
 		public const string ModName = "SellFromTerminal";
-		public const string ModVersion = "1.0.0";
+		public const string ModVersion = "1.0.1";
 
 		public static ManualLogSource Log = BepInEx.Logging.Logger.CreateLogSource(ModGUID);
 		public static SellFromTerminalBase Instance;
