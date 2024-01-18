@@ -2,6 +2,7 @@
 using System.IO;
 using System.Reflection;
 using BepInEx;
+using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
 using UnityEngine;
@@ -28,6 +29,7 @@ namespace SellFromTerminal
 
 			Log.LogInfo("Sell From Terminal has awoken!");
 
+
 			// For NetworkPatcher, initialises patched NetworkBehaviours
 			foreach (Type type in Assembly.GetExecutingAssembly().GetTypes()) {
 				foreach (MethodInfo method in type.GetMethods(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)) {
@@ -46,5 +48,36 @@ namespace SellFromTerminal
 
 			harmony.PatchAll();
 		}
+
+		#region Config
+
+		public static ConfigEntry<bool> ConfigCanSellShotgunAndShells;
+		public static ConfigEntry<bool> ConfigCanSellGifts;
+		public static ConfigEntry<bool> ConfigCanAdvanceQuotaWhenFulfilled;
+		public static ConfigEntry<int> ConfigExactAmountAllowance;
+
+		private void LoadConfigs() {
+			ConfigCanSellShotgunAndShells = Config.Bind("Can Sell",
+														"CanSellShotgunAndShells",
+														false,
+														"Whether or not to allow the 'Shotgun' and 'Ammo' scrap to be sold");
+
+			ConfigCanSellGifts = Config.Bind("Can Sell",
+											 "CanSellGifts",
+											 false,
+											 "Whether or not to allow the 'Gift' item to be sold");
+
+			ConfigCanAdvanceQuotaWhenFulfilled = Config.Bind("Misc",
+															 "CanAdvanceQuotaWhenFulfilled",
+															 true,
+															 "Whether or not the quota will be advanced when met from running a 'sell' command");
+
+			ConfigExactAmountAllowance = Config.Bind("Misc",
+													 "ExactAmountAllowance",
+													 0,
+													 "The amount of allowance over the specified amount to grant. Ex: Setting this to 5 will make 'sell 50' also sell at 51, 52, 53, 54 and 55");
+		}
+
+		#endregion
 	}
 }

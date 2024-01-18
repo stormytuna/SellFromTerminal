@@ -44,8 +44,7 @@ namespace SellFromTerminal
 			TerminalPatch.numScrapSold = totalItemsSold;
 			TerminalPatch.sellScrapFor = totalCreditsGained;
 
-			// TODO: Config option for if this happens or not
-			if (TimeOfDay.Instance.quotaFulfilled >= TimeOfDay.Instance.profitQuota) {
+			if (TimeOfDay.Instance.quotaFulfilled >= TimeOfDay.Instance.profitQuota && SellFromTerminalBase.ConfigCanAdvanceQuotaWhenFulfilled.Value) {
 				StartOfRound.Instance.PassTimeToNextDay(StartOfRound.Instance.connectedPlayersAmount);
 				TimeOfDay.Instance.SetNewProfitQuota();
 			}
@@ -67,8 +66,7 @@ namespace SellFromTerminal
 			TerminalPatch.numScrapSold = totalItemsSold;
 			TerminalPatch.sellScrapFor = totalCreditsGained;
 
-			// TODO: Config option for if this happens or not
-			if (TimeOfDay.Instance.quotaFulfilled >= TimeOfDay.Instance.profitQuota) {
+			if (TimeOfDay.Instance.quotaFulfilled >= TimeOfDay.Instance.profitQuota && SellFromTerminalBase.ConfigCanAdvanceQuotaWhenFulfilled.Value) {
 				StartOfRound.Instance.PassTimeToNextDay(StartOfRound.Instance.connectedPlayersAmount);
 				TimeOfDay.Instance.SetNewProfitQuota();
 			}

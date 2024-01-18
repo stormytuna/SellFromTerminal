@@ -47,7 +47,7 @@ namespace SellFromTerminal
 					}
 				}
 
-				(GrabbableObject first, GrabbableObject second, int sum) foundSum = sums.FirstOrDefault(sum => sum.sum == amountNeeded); // TODO: Allowance amount, if our sum exceeds quota by a small amount we may as well take it
+				(GrabbableObject first, GrabbableObject second, int sum) foundSum = sums.FirstOrDefault(sum => sum.sum >= amountNeeded + SellFromTerminalBase.ConfigExactAmountAllowance.Value);
 				if (foundSum != default) {
 					scrapForQuota.Add(foundSum.first);
 					scrapForQuota.Add(foundSum.second);
@@ -70,10 +70,13 @@ namespace SellFromTerminal
 
 		public static int GetTotalScrapValueInShip() => GetAllScrapInShip().Sum(scrap => scrap.ActualSellValue());
 
-		public static bool CanSellItem(this GrabbableObject item) =>
-			// TODO: Config for if we can sell shotguns and ammo
-			// TODO: Config for if we can sell gifts
-			item.itemProperties.isScrap && item.scrapValue > 0 && !item.isHeld;
+		public static bool CanSellItem(this GrabbableObject item) {
+			bool canSell = item.itemProperties.isScrap && item.scrapValue > 0 && !item.isHeld;
+			bool canSellShotgun = item.itemProperties.name != "Shotgun" || SellFromTerminalBase.ConfigCanSellShotgunAndShells.Value;
+			bool canSellShotgunShell = item.itemProperties.name != "GunAmmo" || SellFromTerminalBase.ConfigCanSellShotgunAndShells.Value;
+			bool canSellGift = item.itemProperties.name != "GiftBox" || SellFromTerminalBase.ConfigCanSellGifts.Value;
+			return canSell && canSellShotgun && canSellShotgunShell && canSellGift;
+		}
 
 		public static int ActualSellValue(this GrabbableObject scrap) {
 			float actualSellValue = scrap.scrapValue * StartOfRound.Instance.companyBuyingRate;
