@@ -364,3 +364,5 @@ FodyWeavers.xsd
 
 NetcodePatcher/
 packages/
+temp/
+SellFromTerminal.zip
