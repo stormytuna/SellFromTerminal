@@ -15,7 +15,6 @@ namespace SellFromTerminal
 			TimeOfDay.Instance.quotaFulfilled += creditsToGain;
 			TimeOfDay.Instance.UpdateProfitQuotaCurrentTime();
 
-			/* TODO: Testing, remove this!
 			if (NetworkManager.Singleton.IsServer) {
 				scrap.GetComponent<NetworkObject>().Despawn();
 			}
@@ -23,7 +22,6 @@ namespace SellFromTerminal
 			if (scrap.radarIcon != null) {
 				Destroy(scrap.radarIcon.gameObject);
 			}
-			*/
 
 			return creditsToGain;
 		}
