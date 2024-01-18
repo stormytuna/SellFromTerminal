@@ -15,10 +15,15 @@ namespace SellFromTerminal.Patches
 		private static TerminalNode sellAmountNode;
 		private static TerminalNode specialQuotaAlreadyMetNode;
 		private static TerminalNode specialNotEnoughScrapNode;
+		private static bool patchedTerminal;
 
 		[HarmonyPostfix]
 		[HarmonyPatch(nameof(Terminal.Awake))]
 		public static void AddTerminalNodes(Terminal __instance) {
+			if (patchedTerminal) {
+				return;
+			}
+
 			specialQuotaAlreadyMetNode = new TerminalNode {
 				name = "quotaAlreadyMet",
 				displayText = "Quota already met.\n\n\n",
@@ -150,6 +155,11 @@ namespace SellFromTerminal.Patches
 			quotaKeyword.defaultVerb = sellKeyword;
 
 			__instance.terminalNodes.allKeywords = __instance.terminalNodes.allKeywords.AddRangeToArray(new[] { sellKeyword, allKeyword, quotaKeyword });
+
+			TerminalNode otherCommandsNode = __instance.terminalNodes.allKeywords.First(node => node.name == "Other").specialKeywordResult;
+			otherCommandsNode.displayText = otherCommandsNode.displayText.Substring(0, otherCommandsNode.displayText.Length - 1) + ">SELL [ALL|QUOTA|<AMOUNT>]\nTo sell items on the ship.\n\n\n";
+
+			patchedTerminal = true;
 		}
 
 		[HarmonyPostfix]
