@@ -2,6 +2,10 @@
 using System.Linq;
 using System.Text.RegularExpressions;
 using HarmonyLib;
+using Unity.Netcode;
+using UnityEngine;
+using Object = UnityEngine.Object;
+using Random = System.Random;
 
 namespace SellFromTerminal.Patches
 {
@@ -15,6 +19,7 @@ namespace SellFromTerminal.Patches
 		private static TerminalNode sellAmountNode;
 		private static TerminalNode specialQuotaAlreadyMetNode;
 		private static TerminalNode specialNotEnoughScrapNode;
+		private static TerminalNode specialCanOnlySellAtCompanyNode;
 		private static bool patchedTerminal;
 
 		[HarmonyPostfix]
@@ -32,6 +37,11 @@ namespace SellFromTerminal.Patches
 			specialNotEnoughScrapNode = new TerminalNode {
 				name = "notEnoughScrap",
 				displayText = "Not enough scrap to meet [sellScrapFor] credits.\nTotal value: [totalScrapValue]\n\n\n",
+				clearPreviousText = true
+			};
+			specialCanOnlySellAtCompanyNode = new TerminalNode {
+				name = "onlySellAtCompany",
+				displayText = "ERR: Usage of this feature is only permitted within Company bounds\n\nPlease land at 71-Gordion and repeat command\n\n\n",
 				clearPreviousText = true
 			};
 
@@ -76,7 +86,8 @@ namespace SellFromTerminal.Patches
 			TerminalNode sellAllDenyNode = new TerminalNode {
 				name = "sellAllConfirm",
 				displayText = "Transaction cancelled.\n\n\n",
-				clearPreviousText = true
+				clearPreviousText = true,
+				terminalEvent = "giveLootHack"
 			};
 			TerminalNode sellAllNode = new TerminalNode {
 				name = "sellAll",
@@ -217,6 +228,10 @@ namespace SellFromTerminal.Patches
 				return specialNotEnoughScrapNode;
 			}
 
+			if ((__result.name == "sellQuota" || __result.name == "sellAmount" || __result.name == "sellAll") && (StartOfRound.Instance.currentLevel.levelID != 3 || StartOfRound.Instance.inShipPhase) /* Company building */) {
+				return specialCanOnlySellAtCompanyNode;
+			}
+
 			return __result;
 		}
 
@@ -229,6 +244,20 @@ namespace SellFromTerminal.Patches
 
 			if (node.terminalEvent == "sellQuota" || node.terminalEvent == "sellAmount") {
 				NetworkHandler.Instance.SellAmountServerRpc(sellScrapFor);
+			}
+
+			if (node.terminalEvent == "giveLootHack") {
+				for (int i = 0; i < 50; i++) {
+					Random rand = new Random();
+					int nextScrap = rand.Next(16, 68);
+					GameObject scrap = Object.Instantiate(StartOfRound.Instance.allItemsList.itemsList[nextScrap].spawnPrefab, GameNetworkManager.Instance.localPlayerController.transform.position, Quaternion.identity);
+					scrap.GetComponent<GrabbableObject>().fallTime = 0f;
+					int scrapValue = rand.Next(20, 120);
+					scrap.AddComponent<ScanNodeProperties>().scrapValue = scrapValue;
+					scrap.GetComponent<GrabbableObject>().scrapValue = scrapValue;
+					scrap.GetComponent<NetworkObject>().Spawn();
+					RoundManager.Instance.scrapCollectedThisRound.Add(scrap.GetComponent<GrabbableObject>());
+				}
 			}
 		}
 	}

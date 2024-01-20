@@ -1,8 +1,10 @@
-﻿using SellFromTerminal.Patches;
+﻿using HarmonyLib;
+using SellFromTerminal.Patches;
 using Unity.Netcode;
 
 namespace SellFromTerminal
 {
+	[HarmonyPatch]
 	public class NetworkHandler : NetworkBehaviour
 	{
 		public static NetworkHandler Instance { get; private set; }
@@ -26,6 +28,25 @@ namespace SellFromTerminal
 			return creditsToGain;
 		}
 
+		[HarmonyPostfix]
+		[HarmonyPatch(typeof(StartOfRound), nameof(StartOfRound.SetPlanetsWeather))]
+		public static void Test() {
+			SellFromTerminalBase.Log.LogInfo("SET WEATHER!!!!");
+		}
+
+		[HarmonyPostfix]
+		[HarmonyPatch(typeof(TimeOfDay), nameof(TimeOfDay.OnDayChanged))]
+		public static void Test2() {
+			SellFromTerminalBase.Log.LogInfo("SET WEATHER2222!!!!");
+		}
+
+		[HarmonyPostfix]
+		[HarmonyPatch(typeof(StartOfRound), nameof(StartOfRound.PassTimeToNextDay))]
+		public static void Test3() {
+			SellFromTerminalBase.Log.LogInfo("SET WEATHER333333333333!!!!");
+			SellFromTerminalBase.Log.LogInfo(StartOfRound.Instance.isChallengeFile);
+		}
+
 		[ClientRpc]
 		public void SellAllScrapClientRpc() {
 			int totalItemsSold = 0;
@@ -41,11 +62,6 @@ namespace SellFromTerminal
 			// Hacky fix for showing the actual amount of items sold and credits gained
 			TerminalPatch.numScrapSold = totalItemsSold;
 			TerminalPatch.sellScrapFor = totalCreditsGained;
-
-			if (TimeOfDay.Instance.quotaFulfilled >= TimeOfDay.Instance.profitQuota && SellFromTerminalBase.ConfigCanAdvanceQuotaWhenFulfilled.Value) {
-				StartOfRound.Instance.PassTimeToNextDay(StartOfRound.Instance.connectedPlayersAmount);
-				TimeOfDay.Instance.SetNewProfitQuota();
-			}
 		}
 
 		[ClientRpc]
@@ -63,11 +79,6 @@ namespace SellFromTerminal
 			// Hacky fix for showing the actual amount of items sold and credits gained
 			TerminalPatch.numScrapSold = totalItemsSold;
 			TerminalPatch.sellScrapFor = totalCreditsGained;
-
-			if (TimeOfDay.Instance.quotaFulfilled >= TimeOfDay.Instance.profitQuota && SellFromTerminalBase.ConfigCanAdvanceQuotaWhenFulfilled.Value) {
-				StartOfRound.Instance.PassTimeToNextDay(StartOfRound.Instance.connectedPlayersAmount);
-				TimeOfDay.Instance.SetNewProfitQuota();
-			}
 		}
 
 		[ServerRpc(RequireOwnership = false)]

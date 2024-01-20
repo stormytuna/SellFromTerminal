@@ -75,7 +75,8 @@ namespace SellFromTerminal
 			bool canSellShotgun = item.itemProperties.name != "Shotgun" || SellFromTerminalBase.ConfigCanSellShotgunAndShells.Value;
 			bool canSellShotgunShell = item.itemProperties.name != "GunAmmo" || SellFromTerminalBase.ConfigCanSellShotgunAndShells.Value;
 			bool canSellGift = item.itemProperties.name != "GiftBox" || SellFromTerminalBase.ConfigCanSellGifts.Value;
-			return canSell && canSellShotgun && canSellShotgunShell && canSellGift;
+			bool canSellPickles = item.itemProperties.name != "PickleJar" || SellFromTerminalBase.ConfigCanSellPickles.Value;
+			return canSell && canSellShotgun && canSellShotgunShell && canSellGift && canSellPickles;
 		}
 
 		public static int ActualSellValue(this GrabbableObject scrap) {

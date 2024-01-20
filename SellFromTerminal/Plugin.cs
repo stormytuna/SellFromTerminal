@@ -55,7 +55,7 @@ namespace SellFromTerminal
 
 		public static ConfigEntry<bool> ConfigCanSellShotgunAndShells;
 		public static ConfigEntry<bool> ConfigCanSellGifts;
-		public static ConfigEntry<bool> ConfigCanAdvanceQuotaWhenFulfilled;
+		public static ConfigEntry<bool> ConfigCanSellPickles;
 		public static ConfigEntry<int> ConfigExactAmountAllowance;
 
 		private void LoadConfigs() {
@@ -69,10 +69,10 @@ namespace SellFromTerminal
 											 false,
 											 "Whether or not to allow the 'Gift' item to be sold");
 
-			ConfigCanAdvanceQuotaWhenFulfilled = Config.Bind("Misc",
-															 "CanAdvanceQuotaWhenFulfilled",
-															 true,
-															 "Whether or not the quota will be advanced when met from running a 'sell' command");
+			ConfigCanSellPickles = Config.Bind("Can Sell",
+											   "CanSellPickles",
+											   true,
+											   "Whether or not to allow the 'Jar of Pickles' item to be sold");
 
 			ConfigExactAmountAllowance = Config.Bind("Misc",
 													 "ExactAmountAllowance",
