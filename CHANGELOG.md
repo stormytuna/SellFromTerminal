@@ -1,2 +1,5 @@
+- v1.1.0: Major bug fix + new config option
+  - Fixed an issue that allowed players to do a 4th day of looting, now all selling must be done at the company building
+  - Added a config entry for whether or not to sell jars of pickles
 - v1.0.1: Fix an issue that allowed a scrap to be sold twice
 - v1.0.0: Initial release

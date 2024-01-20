@@ -14,7 +14,7 @@ namespace SellFromTerminal
 	{
 		public const string ModGUID = "stormytuna.SellFromTerminal";
 		public const string ModName = "SellFromTerminal";
-		public const string ModVersion = "1.0.1";
+		public const string ModVersion = "1.1.0";
 
 		public static ManualLogSource Log = BepInEx.Logging.Logger.CreateLogSource(ModGUID);
 		public static SellFromTerminalBase Instance;
@@ -28,7 +28,6 @@ namespace SellFromTerminal
 			}
 
 			Log.LogInfo("Sell From Terminal has awoken!");
-
 
 			// For NetworkPatcher, initialises patched NetworkBehaviours
 			foreach (Type type in Assembly.GetExecutingAssembly().GetTypes()) {
