@@ -55,6 +55,7 @@ namespace SellFromTerminal
 		public static ConfigEntry<bool> ConfigCanSellShotgunAndShells;
 		public static ConfigEntry<bool> ConfigCanSellGifts;
 		public static ConfigEntry<bool> ConfigCanSellPickles;
+		public static ConfigEntry<bool> ConfigPrioritizeSellingMasks;
 		public static ConfigEntry<int> ConfigExactAmountAllowance;
 
 		private void LoadConfigs() {
@@ -73,6 +74,11 @@ namespace SellFromTerminal
 											   true,
 											   "Whether or not to allow the 'Jar of Pickles' item to be sold");
 
+			ConfigPrioritizeSellingMasks = Config.Bind("Priority Selling",
+													   "PrioritizeSellingMasks",
+													   false,
+													   "Whether or not the mask items should have priority in selling.");
+			
 			ConfigExactAmountAllowance = Config.Bind("Misc",
 													 "ExactAmountAllowance",
 													 0,

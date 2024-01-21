@@ -27,6 +27,35 @@ namespace SellFromTerminal
 			List<GrabbableObject> scrapForQuota = new List<GrabbableObject>();
 
 			int amountNeeded = amount;
+
+			// First add items that are priority
+			// Note: this approach can very easily lead to overselling if the number of priority value
+			// is greater than the amount needed to meet the quota
+			HashSet<string> priorityItems = GetPriorityItems();
+			List<GrabbableObject> itemsToRemove = new List<GrabbableObject>();
+			if (priorityItems.Count > 0)
+			{
+				foreach (GrabbableObject go in allScrap)
+				{
+					if (priorityItems.Contains(go.itemProperties.itemName))
+					{
+						scrapForQuota.Add(go);
+						itemsToRemove.Add(go);
+						amountNeeded -= go.ActualSellValue();
+						if (amountNeeded <= 0)
+						{
+							break;
+						}
+					}
+				}
+				// Use a queue list for removing the objects because we can't remove them while iterating
+				// And if we don't remove they can be added to the list twice which will break
+				foreach (GrabbableObject go in itemsToRemove)
+				{
+                    allScrap.Remove(go);
+                }
+			}
+
 			// Highest value scrap is 210, we only want to go 2 sums deep to keep computational complexity to a minimum so we keep taking until we have 420 credits left
 			while (amountNeeded > 420) {
 				GrabbableObject nextScrap = allScrap[nextScrapIndex++];
@@ -83,5 +112,18 @@ namespace SellFromTerminal
 			float actualSellValue = scrap.scrapValue * StartOfRound.Instance.companyBuyingRate;
 			return (int)Math.Round(actualSellValue);
 		}
-	}
+
+        public static HashSet<string> GetPriorityItems()
+        {
+            HashSet<string> priorityItems = new HashSet<string>();
+			
+            if (SellFromTerminalBase.ConfigPrioritizeSellingMasks.Value)
+            {
+				// Using names instead of ids because the ids didn't seem very unique from quick testing
+				priorityItems.Add("Comedy");
+				priorityItems.Add("Tragedy");
+            }
+			return priorityItems;
+        }
+    }
 }
