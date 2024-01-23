@@ -189,6 +189,10 @@ namespace SellFromTerminal.Patches
 		[HarmonyPostfix]
 		[HarmonyPatch(nameof(Terminal.ParsePlayerSentence))]
 		public static void SetSellScrapForHack(TerminalNode __result, Terminal __instance) {
+			if (__result == null) {
+				return;
+			}
+
 			// We set sellScrapFor here if we're trying to sell anything so that the value is only calculated once and will be the same for both nodes ('sell' and then 'confirm')
 			// For 'sell <amount>' we set it further down in TryParseSellAmount
 			if (__result.name == "sellAll") {
