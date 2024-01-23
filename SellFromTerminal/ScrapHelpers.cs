@@ -47,7 +47,7 @@ namespace SellFromTerminal
 					}
 				}
 
-				(GrabbableObject first, GrabbableObject second, int sum) foundSum = sums.FirstOrDefault(sum => sum.sum >= amountNeeded + SellFromTerminalBase.ConfigExactAmountAllowance.Value);
+				(GrabbableObject first, GrabbableObject second, int sum) foundSum = sums.FirstOrDefault(sum => sum.sum >= amountNeeded && sum.sum <= amountNeeded + SellFromTerminalBase.ConfigExactAmountAllowance.Value);
 				if (foundSum != default) {
 					scrapForQuota.Add(foundSum.first);
 					scrapForQuota.Add(foundSum.second);
