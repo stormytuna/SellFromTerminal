@@ -1,3 +1,4 @@
+- v1.1.2: Fix an issue with how the allowance affected the algorithm
 - v1.1.1: Fix an issue causing incompatibilities with other mods using LethalAPI.Terminal
 - v1.1.0: Major bug fix + new config option
   - Fixed an issue that allowed players to do a 4th day of looting, now all selling must be done at the company building
