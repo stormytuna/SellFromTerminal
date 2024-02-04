@@ -20,7 +20,7 @@ namespace SellFromTerminal.Patches
 
 		[HarmonyPostfix]
 		[HarmonyPatch(nameof(Terminal.Awake))]
-		public static void AddTerminalNodes(ref Terminal __instance) {
+		public static void AddTerminalNodes(Terminal __instance) {
 			if (patchedTerminal) {
 				return;
 			}
@@ -170,18 +170,20 @@ namespace SellFromTerminal.Patches
 
 		[HarmonyPostfix]
 		[HarmonyPatch(nameof(Terminal.TextPostProcess))]
-		public static void ProcessCustomText(ref string __result) {
+		public static string ProcessCustomText(ref string __result) {
 			__result = __result.Replace("[numScrap]", ScrapHelpers.CountAllScrapInShip().ToString());
 			__result = __result.Replace("[sellScrapFor]", sellScrapFor.ToString());
 			__result = __result.Replace("[numScrapSold]", numScrapSold.ToString());
 			__result = __result.Replace("[totalScrapValue]", ScrapHelpers.GetTotalScrapValueInShip().ToString());
 			string companyBuyingRateWarning = StartOfRound.Instance.companyBuyingRate == 1f ? "" : $"\n\nWARNING: Company buying rate is currently at {StartOfRound.Instance.companyBuyingRate:P0}\n\n";
 			__result = __result.Replace("[companyBuyingRateWarning]", companyBuyingRateWarning);
+
+			return __result;
 		}
 
 		[HarmonyPostfix]
 		[HarmonyPatch(nameof(Terminal.ParsePlayerSentence))]
-		public static void SetSellScrapForHack(ref TerminalNode __result, ref Terminal __instance) {
+		public static void SetSellScrapForHack(TerminalNode __result) {
 			if (__result == null) {
 				return;
 			}
@@ -199,7 +201,7 @@ namespace SellFromTerminal.Patches
 
 		[HarmonyPostfix]
 		[HarmonyPatch(nameof(Terminal.ParsePlayerSentence))]
-		public static void TryParseSellAmount(ref TerminalNode __result, ref Terminal __instance) {
+		public static TerminalNode TryParseSellAmount(ref TerminalNode __result, Terminal __instance) {
 			string terminalInput = __instance.screenText.text.Substring(__instance.screenText.text.Length - __instance.textAdded);
 
 			Regex regex = new Regex(@"^sell (\d+$)$");
@@ -208,16 +210,18 @@ namespace SellFromTerminal.Patches
 				sellScrapFor = Convert.ToInt32(match.Groups[1].Value);
 				if (sellScrapFor > 0) {
                     __result = sellAmountNode;
-				}
-			}
-		}
+                }
+            }
+
+            return __result;
+        }
 
 		[HarmonyPostfix]
 		[HarmonyPatch(nameof(Terminal.ParsePlayerSentence))]
-		public static void TryReturnSpecialNodes(ref TerminalNode __result) {
+		public static TerminalNode TryReturnSpecialNodes(ref TerminalNode __result) {
             if (__result == null)
             {
-                return;
+                return null;
             }
 
             if (__result.name == "sellQuota" && TimeOfDay.Instance.profitQuota - TimeOfDay.Instance.quotaFulfilled <= 0) {
@@ -231,7 +235,10 @@ namespace SellFromTerminal.Patches
 			if ((__result.name == "sellQuota" || __result.name == "sellAmount" || __result.name == "sellAll") && (StartOfRound.Instance.currentLevel.levelID != 3 || StartOfRound.Instance.inShipPhase) /* Company building */) {
                 __result = specialCanOnlySellAtCompanyNode;
 			}
-		}
+
+			return __result;
+
+        }
 
 		[HarmonyPostfix]
 		[HarmonyPatch(nameof(Terminal.RunTerminalEvents))]
