@@ -242,7 +242,7 @@ namespace SellFromTerminal.Patches
 
 		[HarmonyPostfix]
 		[HarmonyPatch(nameof(Terminal.RunTerminalEvents))]
-		public static void RunTerminalEvents(ref TerminalNode node) {
+		public static void RunTerminalEvents(TerminalNode node) {
 			if (node.terminalEvent == "sellAll") {
 				NetworkHandler.Instance.SellAllScrapServerRpc();
 			}
