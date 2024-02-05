@@ -171,19 +171,20 @@ namespace SellFromTerminal.Patches
 		[HarmonyPostfix]
 		[HarmonyPatch(nameof(Terminal.TextPostProcess))]
 		public static string ProcessCustomText(string __result) {
-			__result = __result.Replace("[numScrap]", ScrapHelpers.CountAllScrapInShip().ToString());
-			__result = __result.Replace("[sellScrapFor]", sellScrapFor.ToString());
-			__result = __result.Replace("[numScrapSold]", numScrapSold.ToString());
-			__result = __result.Replace("[totalScrapValue]", ScrapHelpers.GetTotalScrapValueInShip().ToString());
 			string companyBuyingRateWarning = StartOfRound.Instance.companyBuyingRate == 1f ? "" : $"\n\nWARNING: Company buying rate is currently at {StartOfRound.Instance.companyBuyingRate:P0}\n\n";
-			__result = __result.Replace("[companyBuyingRateWarning]", companyBuyingRateWarning);
 
-			return __result;
+			string processedText = __result.Replace("[numScrap]", ScrapHelpers.CountAllScrapInShip().ToString())
+										   .Replace("[sellScrapFor]", sellScrapFor.ToString())
+										   .Replace("[numScrapSold]", numScrapSold.ToString())
+										   .Replace("[totalScrapValue]", ScrapHelpers.GetTotalScrapValueInShip().ToString())
+										   .Replace("[companyBuyingRateWarning]", companyBuyingRateWarning);
+
+			return processedText;
 		}
 
 		[HarmonyPostfix]
 		[HarmonyPatch(nameof(Terminal.ParsePlayerSentence))]
-		public static void SetSellScrapForHack(TerminalNode __result, Terminal __instance) {
+		public static void SetSellScrapForHack(TerminalNode __result) {
 			if (__result == null) {
 				return;
 			}
@@ -201,7 +202,7 @@ namespace SellFromTerminal.Patches
 
 		[HarmonyPostfix]
 		[HarmonyPatch(nameof(Terminal.ParsePlayerSentence))]
-		public static TerminalNode TryParseSellAmount(TerminalNode __result, Terminal __instance) {
+		public static TerminalNode TryParseSellAmount(ref TerminalNode __result, Terminal __instance) {
 			string terminalInput = __instance.screenText.text.Substring(__instance.screenText.text.Length - __instance.textAdded);
 
 			Regex regex = new Regex(@"^sell (\d+$)$");
@@ -209,7 +210,7 @@ namespace SellFromTerminal.Patches
 			if (match.Success) {
 				sellScrapFor = Convert.ToInt32(match.Groups[1].Value);
 				if (sellScrapFor > 0) {
-					return sellAmountNode;
+					__result = sellAmountNode;
 				}
 			}
 
@@ -218,7 +219,12 @@ namespace SellFromTerminal.Patches
 
 		[HarmonyPostfix]
 		[HarmonyPatch(nameof(Terminal.ParsePlayerSentence))]
-		public static TerminalNode TryReturnSpecialNodes(TerminalNode __result, Terminal __instance) {
+		public static TerminalNode TryReturnSpecialNodes(TerminalNode __result) {
+			// Normally not needed, but LethalAPI.TerminalAPI can cause null to be passed here
+			if (__result is null) {
+				return null;
+			}
+
 			if (__result.name == "sellQuota" && TimeOfDay.Instance.profitQuota - TimeOfDay.Instance.quotaFulfilled <= 0) {
 				return specialQuotaAlreadyMetNode;
 			}
