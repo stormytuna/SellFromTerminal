@@ -170,15 +170,16 @@ namespace SellFromTerminal.Patches
 
 		[HarmonyPostfix]
 		[HarmonyPatch(nameof(Terminal.TextPostProcess))]
-		public static string ProcessCustomText(ref string __result) {
-			__result = __result.Replace("[numScrap]", ScrapHelpers.CountAllScrapInShip().ToString());
-			__result = __result.Replace("[sellScrapFor]", sellScrapFor.ToString());
-			__result = __result.Replace("[numScrapSold]", numScrapSold.ToString());
-			__result = __result.Replace("[totalScrapValue]", ScrapHelpers.GetTotalScrapValueInShip().ToString());
+		public static string ProcessCustomText(string __result) {
 			string companyBuyingRateWarning = StartOfRound.Instance.companyBuyingRate == 1f ? "" : $"\n\nWARNING: Company buying rate is currently at {StartOfRound.Instance.companyBuyingRate:P0}\n\n";
-			__result = __result.Replace("[companyBuyingRateWarning]", companyBuyingRateWarning);
 
-			return __result;
+			string processedText = __result.Replace("[numScrap]", ScrapHelpers.CountAllScrapInShip().ToString())
+										   .Replace("[sellScrapFor]", sellScrapFor.ToString())
+										   .Replace("[numScrapSold]", numScrapSold.ToString())
+										   .Replace("[totalScrapValue]", ScrapHelpers.GetTotalScrapValueInShip().ToString())
+										   .Replace("[companyBuyingRateWarning]", companyBuyingRateWarning);
+
+			return processedText;
 		}
 
 		[HarmonyPostfix]
@@ -209,36 +210,35 @@ namespace SellFromTerminal.Patches
 			if (match.Success) {
 				sellScrapFor = Convert.ToInt32(match.Groups[1].Value);
 				if (sellScrapFor > 0) {
-                    __result = sellAmountNode;
-                }
-            }
-
-            return __result;
-        }
-
-		[HarmonyPostfix]
-		[HarmonyPatch(nameof(Terminal.ParsePlayerSentence))]
-		public static TerminalNode TryReturnSpecialNodes(ref TerminalNode __result) {
-            if (__result == null)
-            {
-                return null;
-            }
-
-            if (__result.name == "sellQuota" && TimeOfDay.Instance.profitQuota - TimeOfDay.Instance.quotaFulfilled <= 0) {
-                __result = specialQuotaAlreadyMetNode;
-			}
-
-			if ((__result.name == "sellQuota" || __result.name == "sellAmount") && sellScrapFor > ScrapHelpers.GetTotalScrapValueInShip()) {
-                __result = specialNotEnoughScrapNode;
-			}
-
-			if ((__result.name == "sellQuota" || __result.name == "sellAmount" || __result.name == "sellAll") && (StartOfRound.Instance.currentLevel.levelID != 3 || StartOfRound.Instance.inShipPhase) /* Company building */) {
-                __result = specialCanOnlySellAtCompanyNode;
+					__result = sellAmountNode;
+				}
 			}
 
 			return __result;
+		}
 
-        }
+		[HarmonyPostfix]
+		[HarmonyPatch(nameof(Terminal.ParsePlayerSentence))]
+		public static TerminalNode TryReturnSpecialNodes(TerminalNode __result) {
+			// Normally not needed, but LethalAPI.TerminalAPI can cause null to be passed here
+			if (__result is null) {
+				return null;
+			}
+
+			if (__result.name == "sellQuota" && TimeOfDay.Instance.profitQuota - TimeOfDay.Instance.quotaFulfilled <= 0) {
+				return specialQuotaAlreadyMetNode;
+			}
+
+			if ((__result.name == "sellQuota" || __result.name == "sellAmount") && sellScrapFor > ScrapHelpers.GetTotalScrapValueInShip()) {
+				return specialNotEnoughScrapNode;
+			}
+
+			if ((__result.name == "sellQuota" || __result.name == "sellAmount" || __result.name == "sellAll") && (StartOfRound.Instance.currentLevel.levelID != 3 || StartOfRound.Instance.inShipPhase) /* Company building */) {
+				return specialCanOnlySellAtCompanyNode;
+			}
+
+			return __result;
+		}
 
 		[HarmonyPostfix]
 		[HarmonyPatch(nameof(Terminal.RunTerminalEvents))]
