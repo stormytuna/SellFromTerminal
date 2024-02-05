@@ -184,9 +184,9 @@ namespace SellFromTerminal.Patches
 
 		[HarmonyPostfix]
 		[HarmonyPatch(nameof(Terminal.ParsePlayerSentence))]
-		public static void SetSellScrapForHack(TerminalNode __result) {
-			if (__result == null) {
-				return;
+		public static TerminalNode SetSellScrapForHack(TerminalNode __result) {
+			if (__result is null) {
+				return null;
 			}
 
 			// We set sellScrapFor here if we're trying to sell anything so that the value is only calculated once and will be the same for both nodes ('sell' and then 'confirm')
@@ -198,11 +198,13 @@ namespace SellFromTerminal.Patches
 			if (__result.name == "sellQuota") {
 				sellScrapFor = TimeOfDay.Instance.profitQuota - TimeOfDay.Instance.quotaFulfilled;
 			}
+
+			return __result;
 		}
 
 		[HarmonyPostfix]
 		[HarmonyPatch(nameof(Terminal.ParsePlayerSentence))]
-		public static TerminalNode TryParseSellAmount(ref TerminalNode __result, Terminal __instance) {
+		public static TerminalNode TryParseSellAmount(TerminalNode __result, Terminal __instance) {
 			string terminalInput = __instance.screenText.text.Substring(__instance.screenText.text.Length - __instance.textAdded);
 
 			Regex regex = new Regex(@"^sell (\d+$)$");
@@ -210,7 +212,7 @@ namespace SellFromTerminal.Patches
 			if (match.Success) {
 				sellScrapFor = Convert.ToInt32(match.Groups[1].Value);
 				if (sellScrapFor > 0) {
-					__result = sellAmountNode;
+					return sellAmountNode;
 				}
 			}
 
